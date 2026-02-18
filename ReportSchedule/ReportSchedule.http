@@ -1,0 +1,11 @@
+@ReportSchedule_HostAddress = http://localhost:5140
+
+### Health
+GET {{ReportSchedule_HostAddress}}/health
+Accept: application/json
+
+###
+
+### Swagger (somente em Development)
+GET {{ReportSchedule_HostAddress}}/swagger/index.html
+
