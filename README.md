@@ -5,7 +5,7 @@ API em ASP.NET Core (.NET 8) para agendamento de relatórios, com persistência 
 ## Rotas
 
 - `GET /health`
-- CRUD de agendamentos: `GET/POST/PUT/DELETE /api/report-schedules`
+- CRUD de agendamentos: `GET/POST/PUT/PATCH/DELETE /api/report-schedules`
 
 ## Frameworks e bibliotecas
 
