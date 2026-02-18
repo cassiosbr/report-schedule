@@ -47,3 +47,19 @@ Opção B) User Secrets (recomendado para rodar local):
 - `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "server=localhost;port=3306;database=report_schedule;user=root;password=root"`
 
 > No Docker, normalmente você não precisa ajustar `appsettings.json`, porque o Compose injeta as variáveis de ambiente.
+
+## Testes
+
+Os testes unitários ficam no projeto `ReportSchedule.Tests`.
+
+- Rodar os testes:
+  - `dotnet test`
+
+- Exibir os nomes dos testes no console (saída detalhada):
+  - `dotnet test --logger "console;verbosity=detailed"`
+
+- Listar os testes (sem executar):
+  - `dotnet test --list-tests`
+
+- Gerar relatório TRX (útil para CI):
+  - `dotnet test --logger "trx;LogFileName=test_results.trx"`

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ReportSchedule.Controllers;
+using Xunit;
 
 namespace ReportSchedule.Tests.Controllers;
 
