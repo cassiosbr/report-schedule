@@ -12,7 +12,7 @@ builder.Services.AddDbContext<ReportSchedule.Data.AppDbContext>(options =>
     {
         throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     }
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 0)));
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

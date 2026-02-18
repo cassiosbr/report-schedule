@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
-using System.Threading;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using ReportSchedule.Models;
+using ReportSchedule.Data;
 
 namespace ReportSchedule.controllers;
 
@@ -9,19 +9,32 @@ namespace ReportSchedule.controllers;
 [Route("api/report-schedules")]
 public class ReportSchedulesController : ControllerBase
 {
-    private static readonly ConcurrentDictionary<int, EventReportSchedule> Items = new();
-    private static int _nextId = 0;
+    private readonly AppDbContext _db;
+
+    public ReportSchedulesController(AppDbContext db)
+    {
+        _db = db;
+    }
 
     [HttpGet]
-    public ActionResult<IEnumerable<EventReportSchedule>> GetAll()
+    public async Task<ActionResult<IEnumerable<EventReportSchedule>>> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(Items.Values.OrderBy(x => x.Id));
+        var items = await _db.ReportSchedules
+            .AsNoTracking()
+            .OrderBy(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        return Ok(items);
     }
 
     [HttpGet("{id:int}")]
-    public ActionResult<EventReportSchedule> GetById(int id)
+    public async Task<ActionResult<EventReportSchedule>> GetById(int id, CancellationToken cancellationToken)
     {
-        if (!Items.TryGetValue(id, out var item))
+        var item = await _db.ReportSchedules
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (item is null)
         {
             return NotFound();
         }
@@ -30,67 +43,52 @@ public class ReportSchedulesController : ControllerBase
     }
 
     [HttpPost]
-    public ActionResult<EventReportSchedule> Create([FromBody] EventReportSchedule input)
+    public async Task<ActionResult<EventReportSchedule>> Create([FromBody] EventReportSchedule input, CancellationToken cancellationToken)
     {
-        var id = Interlocked.Increment(ref _nextId);
+        input.Id = 0;
+        _db.ReportSchedules.Add(input);
+        await _db.SaveChangesAsync(cancellationToken);
 
-        var created = new EventReportSchedule
-        {
-            Id = id,
-            Name = input.Name,
-            Emails = input.Emails,
-            Monday = input.Monday,
-            Tuesday = input.Tuesday,
-            Wednesday = input.Wednesday,
-            Thursday = input.Thursday,
-            Friday = input.Friday,
-            Saturday = input.Saturday,
-            Sunday = input.Sunday,
-            Time = input.Time,
-            Days = input.Days,
-            IsActive = input.IsActive,
-        };
-
-        Items[id] = created;
-        return CreatedAtAction(nameof(GetById), new { id }, created);
+        return CreatedAtAction(nameof(GetById), new { id = input.Id }, input);
     }
 
     [HttpPut("{id:int}")]
-    public ActionResult<EventReportSchedule> Update(int id, [FromBody] EventReportSchedule input)
+    public async Task<ActionResult<EventReportSchedule>> Update(int id, [FromBody] EventReportSchedule input, CancellationToken cancellationToken)
     {
-        if (!Items.ContainsKey(id))
+        var existing = await _db.ReportSchedules.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (existing is null)
         {
             return NotFound();
         }
 
-        var updated = new EventReportSchedule
-        {
-            Id = id,
-            Name = input.Name,
-            Emails = input.Emails,
-            Monday = input.Monday,
-            Tuesday = input.Tuesday,
-            Wednesday = input.Wednesday,
-            Thursday = input.Thursday,
-            Friday = input.Friday,
-            Saturday = input.Saturday,
-            Sunday = input.Sunday,
-            Time = input.Time,
-            Days = input.Days,
-            IsActive = input.IsActive,
-        };
+        existing.Name = input.Name;
+        existing.Emails = input.Emails;
+        existing.Monday = input.Monday;
+        existing.Tuesday = input.Tuesday;
+        existing.Wednesday = input.Wednesday;
+        existing.Thursday = input.Thursday;
+        existing.Friday = input.Friday;
+        existing.Saturday = input.Saturday;
+        existing.Sunday = input.Sunday;
+        existing.Time = input.Time;
+        existing.Days = input.Days;
+        existing.IsActive = input.IsActive;
 
-        Items[id] = updated;
-        return Ok(updated);
+        await _db.SaveChangesAsync(cancellationToken);
+        return Ok(existing);
     }
 
     [HttpDelete("{id:int}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
-        if (!Items.TryRemove(id, out _))
+        var existing = await _db.ReportSchedules.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (existing is null)
         {
             return NotFound();
         }
+
+        _db.ReportSchedules.Remove(existing);
+        await _db.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
