@@ -26,6 +26,7 @@ public class ReportSchedulesControllerTests
     {
         return new EventReportSchedule
         {
+            CreatedAt = DateTime.UtcNow,
             Name = name,
             Emails = new List<string> { "joao@teste.com" },
             Monday = true,
@@ -42,12 +43,12 @@ public class ReportSchedulesControllerTests
         db.ReportSchedules.AddRange(NewSchedule("B"), NewSchedule("A"));
         await db.SaveChangesAsync();
 
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var action = await controller.GetAll(CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
-        var items = Assert.IsAssignableFrom<IEnumerable<EventReportSchedule>>(ok.Value);
+        var items = Assert.IsAssignableFrom<IEnumerable<EventReportScheduleDto>>(ok.Value);
         var list = items.ToList();
 
         Assert.Equal(2, list.Count);
@@ -58,7 +59,7 @@ public class ReportSchedulesControllerTests
     public async Task GetById_WhenMissing_ReturnsNotFound()
     {
         using var db = CreateDbContext(nameof(GetById_WhenMissing_ReturnsNotFound));
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var action = await controller.GetById(123, CancellationToken.None);
 
@@ -73,12 +74,12 @@ public class ReportSchedulesControllerTests
         db.ReportSchedules.Add(entity);
         await db.SaveChangesAsync();
 
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var action = await controller.GetById(entity.Id, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
-        var item = Assert.IsType<EventReportSchedule>(ok.Value);
+        var item = Assert.IsType<EventReportScheduleDto>(ok.Value);
         Assert.Equal(entity.Id, item.Id);
         Assert.Equal("X", item.Name);
     }
@@ -87,7 +88,7 @@ public class ReportSchedulesControllerTests
     public async Task Create_SetsIdToZero_AndReturnsCreatedAtAction()
     {
         using var db = CreateDbContext(nameof(Create_SetsIdToZero_AndReturnsCreatedAtAction));
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var input = NewSchedule("Created");
         input.Id = 999;
@@ -97,7 +98,7 @@ public class ReportSchedulesControllerTests
         var created = Assert.IsType<CreatedAtActionResult>(action.Result);
         Assert.Equal(nameof(ReportSchedulesController.GetById), created.ActionName);
 
-        var createdItem = Assert.IsType<EventReportSchedule>(created.Value);
+        var createdItem = Assert.IsType<EventReportScheduleDto>(created.Value);
         Assert.True(createdItem.Id > 0);
 
         Assert.NotNull(created.RouteValues);
@@ -113,7 +114,7 @@ public class ReportSchedulesControllerTests
     public async Task Update_WhenMissing_ReturnsNotFound()
     {
         using var db = CreateDbContext(nameof(Update_WhenMissing_ReturnsNotFound));
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var input = NewSchedule("Updated");
         var action = await controller.Update(777, input, CancellationToken.None);
@@ -135,7 +136,7 @@ public class ReportSchedulesControllerTests
         db.ReportSchedules.Add(existing);
         await db.SaveChangesAsync();
 
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var input = NewSchedule("New");
         input.Emails = new List<string> { "fernanda@teste.com", "raissa@teste.com" };
@@ -148,7 +149,7 @@ public class ReportSchedulesControllerTests
         var action = await controller.Update(existing.Id, input, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
-        var returned = Assert.IsType<EventReportSchedule>(ok.Value);
+        var returned = Assert.IsType<EventReportScheduleDto>(ok.Value);
         Assert.Equal(existing.Id, returned.Id);
         Assert.Equal("New", returned.Name);
         Assert.Equal(2, returned.Emails.Count);
@@ -172,7 +173,7 @@ public class ReportSchedulesControllerTests
     public async Task Patch_WhenMissing_ReturnsNotFound()
     {
         using var db = CreateDbContext(nameof(Patch_WhenMissing_ReturnsNotFound));
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var patch = new EventReportSchedulePatchDto { Name = "X" };
 
@@ -196,7 +197,7 @@ public class ReportSchedulesControllerTests
         db.ReportSchedules.Add(existing);
         await db.SaveChangesAsync();
 
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var patch = new EventReportSchedulePatchDto
         {
@@ -208,7 +209,7 @@ public class ReportSchedulesControllerTests
         var action = await controller.Patch(existing.Id, patch, CancellationToken.None);
 
         var ok = Assert.IsType<OkObjectResult>(action.Result);
-        var returned = Assert.IsType<EventReportSchedule>(ok.Value);
+        var returned = Assert.IsType<EventReportScheduleDto>(ok.Value);
 
         Assert.Equal(existing.Id, returned.Id);
         Assert.Equal("Patched", returned.Name);
@@ -233,7 +234,7 @@ public class ReportSchedulesControllerTests
     public async Task Delete_WhenMissing_ReturnsNotFound()
     {
         using var db = CreateDbContext(nameof(Delete_WhenMissing_ReturnsNotFound));
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var action = await controller.Delete(404, CancellationToken.None);
 
@@ -248,7 +249,7 @@ public class ReportSchedulesControllerTests
         db.ReportSchedules.Add(existing);
         await db.SaveChangesAsync();
 
-        var controller = new ReportSchedulesController(db);
+        var controller = new ReportSchedulesController(db, TimeZoneInfo.Utc);
 
         var action = await controller.Delete(existing.Id, CancellationToken.None);
 

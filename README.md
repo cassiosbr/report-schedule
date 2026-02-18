@@ -21,6 +21,8 @@ O projeto inclui um `docker-compose.yml` na raiz para subir MySQL e a API.
 - Subir serviços:
   - `docker-compose up -d --build`
 
+> Se você estiver usando Podman, pode usar `podman compose up -d --build`.
+
 A API recebe a connection string via variável de ambiente (ex.: `ConnectionStrings__DefaultConnection`). O `.env` é usado pelo Compose e não deve ser commitado.
 
 ## Migrações (EF Core)
@@ -47,6 +49,41 @@ Opção B) User Secrets (recomendado para rodar local):
 - `dotnet user-secrets set "ConnectionStrings:DefaultConnection" "server=localhost;port=3306;database=report_schedule;user=root;password=root"`
 
 > No Docker, normalmente você não precisa ajustar `appsettings.json`, porque o Compose injeta as variáveis de ambiente.
+
+## Worker (processamento em background)
+
+O projeto `ReportSchedule.Worker` roda em background e consulta o banco periodicamente. Quando encontra um agendamento que atende às regras (ativo, dentro dos últimos X dias, dia da semana marcado e dentro da janela do horário), ele imprime no console:
+
+- `Nova tarefa encontrada. <Name> (<Id>)`
+
+### Rodando via docker-compose
+
+O serviço `worker` já está definido no Compose junto com `db` e `api`.
+
+- Subir tudo:
+  - `docker-compose up -d --build`
+
+- Ver logs do Worker:
+  - `docker-compose logs -f worker`
+
+### Timezone / horário local
+
+O Worker usa o fuso `America/Sao_Paulo` (configurável) para avaliar:
+
+- data atual e “últimos X dias”
+- dia da semana (`Monday..Sunday`)
+- horário (`Time`)
+
+Configurações relevantes:
+
+- `Scheduling__TimeZoneId` (ex.: `America/Sao_Paulo`)
+- `TZ` (timezone do container)
+
+Diagnóstico rápido (se a tarefa não estiver “batendo”):
+
+- `docker-compose exec worker date`
+
+> A API aplica migrations automaticamente ao iniciar; isso garante que o schema esteja atualizado antes do Worker processar.
 
 ## Testes
 

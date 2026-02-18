@@ -9,6 +9,8 @@ public class EventReportSchedule
     [Key]
     public int Id { get; set; }
 
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     [Required]
     [MaxLength(300)]
     public string Name { get; set; } = string.Empty;

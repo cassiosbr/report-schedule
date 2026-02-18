@@ -5,6 +5,7 @@ services:
     env_file:
       - .env
     environment:
+      TZ: America/Sao_Paulo
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
@@ -33,6 +34,25 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: ReportSchedule.Worker/Dockerfile
+    container_name: report-schedule-worker
+    env_file:
+      - .env
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      TZ: America/Sao_Paulo
+      Scheduling__TimeZoneId: America/Sao_Paulo
+      ConnectionStrings__DefaultConnection: server=db;port=3306;database=${MYSQL_DATABASE};user=${MYSQL_USER};password=${MYSQL_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   mysql_data:

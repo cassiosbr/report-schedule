@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ReportSchedule.Dtos;
 using ReportSchedule.Models;
 using ReportSchedule.Data;
+using System.Globalization;
 
 namespace ReportSchedule.Controllers;
 
@@ -11,25 +12,27 @@ namespace ReportSchedule.Controllers;
 public class ReportSchedulesController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly TimeZoneInfo _timeZone;
 
-    public ReportSchedulesController(AppDbContext db)
+    public ReportSchedulesController(AppDbContext db, TimeZoneInfo timeZone)
     {
         _db = db;
+        _timeZone = timeZone;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<EventReportSchedule>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<EventReportScheduleDto>>> GetAll(CancellationToken cancellationToken)
     {
         var items = await _db.ReportSchedules
             .AsNoTracking()
             .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
-        return Ok(items);
+        return Ok(items.Select(ToDto));
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<EventReportSchedule>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<EventReportScheduleDto>> GetById(int id, CancellationToken cancellationToken)
     {
         var item = await _db.ReportSchedules
             .AsNoTracking()
@@ -40,21 +43,22 @@ public class ReportSchedulesController : ControllerBase
             return NotFound();
         }
 
-        return Ok(item);
+        return Ok(ToDto(item));
     }
 
     [HttpPost]
-    public async Task<ActionResult<EventReportSchedule>> Create([FromBody] EventReportSchedule input, CancellationToken cancellationToken)
+    public async Task<ActionResult<EventReportScheduleDto>> Create([FromBody] EventReportSchedule input, CancellationToken cancellationToken)
     {
         input.Id = 0;
+        input.CreatedAt = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone);
         _db.ReportSchedules.Add(input);
         await _db.SaveChangesAsync(cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { id = input.Id }, input);
+        return CreatedAtAction(nameof(GetById), new { id = input.Id }, ToDto(input));
     }
 
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<EventReportSchedule>> Update(int id, [FromBody] EventReportSchedule input, CancellationToken cancellationToken)
+    public async Task<ActionResult<EventReportScheduleDto>> Update(int id, [FromBody] EventReportSchedule input, CancellationToken cancellationToken)
     {
         var existing = await _db.ReportSchedules.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (existing is null)
@@ -76,11 +80,11 @@ public class ReportSchedulesController : ControllerBase
         existing.IsActive = input.IsActive;
 
         await _db.SaveChangesAsync(cancellationToken);
-        return Ok(existing);
+        return Ok(ToDto(existing));
     }
 
     [HttpPatch("{id:int}")]
-    public async Task<ActionResult<EventReportSchedule>> Patch(int id, [FromBody] EventReportSchedulePatchDto patch, CancellationToken cancellationToken)
+    public async Task<ActionResult<EventReportScheduleDto>> Patch(int id, [FromBody] EventReportSchedulePatchDto patch, CancellationToken cancellationToken)
     {
         var existing = await _db.ReportSchedules.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (existing is null)
@@ -122,7 +126,7 @@ public class ReportSchedulesController : ControllerBase
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return Ok(existing);
+        return Ok(ToDto(existing));
     }
 
     [HttpDelete("{id:int}")]
@@ -138,5 +142,28 @@ public class ReportSchedulesController : ControllerBase
         await _db.SaveChangesAsync(cancellationToken);
 
         return NoContent();
+    }
+
+    private EventReportScheduleDto ToDto(EventReportSchedule entity)
+    {
+        var createdLocal = DateTime.SpecifyKind(entity.CreatedAt, DateTimeKind.Unspecified);
+
+        return new EventReportScheduleDto
+        {
+            Id = entity.Id,
+            CreatedAt = createdLocal.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+            Name = entity.Name,
+            Emails = entity.Emails,
+            Monday = entity.Monday,
+            Tuesday = entity.Tuesday,
+            Wednesday = entity.Wednesday,
+            Thursday = entity.Thursday,
+            Friday = entity.Friday,
+            Saturday = entity.Saturday,
+            Sunday = entity.Sunday,
+            Time = entity.Time,
+            Days = entity.Days,
+            IsActive = entity.IsActive,
+        };
     }
 }
