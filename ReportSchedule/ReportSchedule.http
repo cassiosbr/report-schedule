@@ -6,6 +6,67 @@ Accept: application/json
 
 ###
 
+### ReportSchedules - List
+GET {{ReportSchedule_HostAddress}}/api/report-schedules
+Accept: application/json
+
+###
+
+### ReportSchedules - Create
+POST {{ReportSchedule_HostAddress}}/api/report-schedules
+Content-Type: application/json
+
+{
+	"name": "Relatório Diário",
+	"emails": ["a@exemplo.com", "b@exemplo.com"],
+	"monday": true,
+	"tuesday": false,
+	"wednesday": true,
+	"thursday": false,
+	"friday": true,
+	"saturday": false,
+	"sunday": false,
+	"time": "08:30:00",
+	"days": 30,
+	"isActive": true
+}
+
+###
+
+### ReportSchedules - Get by Id
+@ReportScheduleId = 1
+GET {{ReportSchedule_HostAddress}}/api/report-schedules/{{ReportScheduleId}}
+Accept: application/json
+
+###
+
+### ReportSchedules - Update
+PUT {{ReportSchedule_HostAddress}}/api/report-schedules/{{ReportScheduleId}}
+Content-Type: application/json
+
+{
+	"id": {{ReportScheduleId}},
+	"name": "Relatório Diário (Atualizado)",
+	"emails": ["a@exemplo.com"],
+	"monday": true,
+	"tuesday": true,
+	"wednesday": true,
+	"thursday": true,
+	"friday": true,
+	"saturday": false,
+	"sunday": false,
+	"time": "09:00:00",
+	"days": 15,
+	"isActive": true
+}
+
+###
+
+### ReportSchedules - Delete
+DELETE {{ReportSchedule_HostAddress}}/api/report-schedules/{{ReportScheduleId}}
+
+###
+
 ### Swagger (somente em Development)
 GET {{ReportSchedule_HostAddress}}/swagger/index.html
 
