@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ReportSchedule.Models;
 using ReportSchedule.Data;
 
-namespace ReportSchedule.controllers;
+namespace ReportSchedule.Controllers;
 
 [ApiController]
 [Route("api/report-schedules")]
